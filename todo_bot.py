@@ -18,13 +18,13 @@ HELP = """
 tasks = {}
 
 # write task list to file (with overwrite)
-def to_file(tasks):
-    with open("tasks.pickle", "wb") as f:
+def to_file(tasks, chat_id):
+    with open(f"tasks_{chat_id}.pickle", "wb") as f:
         pickle.dump(tasks, f)
 
 # read task list from file
-def from_file():
-    with open("tasks.pickle", "rb") as f:
+def from_file(chat_id):
+    with open(f"tasks_{chat_id}.pickle", "rb") as f:
         return pickle.load(f)
 
 
@@ -47,15 +47,24 @@ def is_correct_date(date):
         return False
 
 # main program (body of todo list bot)
-try:
-    tasks = from_file()
-except FileNotFoundError:
-    to_file(tasks)
+# try:
+#     tasks = from_file()
+# except FileNotFoundError:
+#     0 # to_file(tasks)
 
 @bot.message_handler(commands=["help"])
 def help(message):
     bot.send_message(message.chat.id, HELP)
 
+@bot.message_handler(commands=["start"])
+def start(message):
+    try: 
+        tasks.update(from_file(str(message.chat.id)))
+        bot.send_message(message.chat.id, "Ваши задачи восстановлены из памяти.")
+    except FileNotFoundError:
+        to_file(tasks, str(message.chat.id))
+        bot.send_message(message.chat.id, "Приветствую, новый пользователь! Можете начать добавлять задачи.")
+    
 @bot.message_handler(commands=["add"])
 def add(message):
     try:
@@ -66,7 +75,7 @@ def add(message):
     task = ' '.join([tail])
     if is_correct_date(date):
         add_todo(date, task)
-        to_file(tasks)
+        to_file(tasks, str(message.chat.id))
         bot.send_message(message.chat.id, f'Задача {task} добавлена на дату {date}')
     else:
         bot.send_message(message.chat.id, "Формат даты введен неверно. Дата должна быть в формате ГГГГ.ММ.ДД.")
