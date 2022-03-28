@@ -1,4 +1,6 @@
 import pickle
+import datetime
+
 
 HELP = """
 help - напечатать справку по программе.
